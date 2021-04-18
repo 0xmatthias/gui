@@ -35,7 +35,7 @@ func (r Resize) String() string {
 // the purpose of delivering events. This is because the production of events is fairly
 // infrequent and should never out-run their consumption in the long term.
 func MakeEventsChan() (<-chan Event, chan<- Event) {
-	out, in := make(chan Event), make(chan Event)
+	out, in := make(chan Event, 1000), make(chan Event, 1000)
 
 	go func() {
 		var queue []Event
