@@ -281,20 +281,25 @@ func (w *Win) openGLThread() {
 	w.openGLFlush(w.img.Bounds())
 
 	ticker := time.NewTicker(time.Second / 60)
-	for {
-		var totalR image.Rectangle
+	var totalR image.Rectangle
+	changed := false
 
+	for {
 		select {
 		case <-ticker.C:
-			w.openGLFlush(totalR)
-			totalR = image.ZR
-			continue
+			if changed {
+				changed = false
+				w.openGLFlush(totalR)
+				totalR = image.ZR
+				continue
+			}
 
 		case r := <-w.newSize:
 			img := image.NewRGBA(r)
 			draw.Draw(img, w.img.Bounds(), w.img, w.img.Bounds().Min, draw.Src)
 			w.img = img
 			totalR = totalR.Union(r)
+			changed = true
 
 		case d, ok := <-w.draw:
 			if !ok {
@@ -302,8 +307,10 @@ func (w *Win) openGLThread() {
 				close(w.finish)
 				return
 			}
+
 			r := d(w.img)
 			totalR = totalR.Union(r)
+			changed = true
 		}
 	}
 }
