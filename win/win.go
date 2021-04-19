@@ -302,7 +302,7 @@ loop:
 
 		for {
 			select {
-			case <-time.After(time.Second / 960):
+			case <-time.After(time.Second / 60):
 				w.openGLFlush(totalR)
 				totalR = image.ZR
 				continue loop
