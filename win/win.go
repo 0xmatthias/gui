@@ -301,8 +301,9 @@ loop:
 		}
 
 		for {
+			ticker := time.NewTicker(time.Second / 60)
 			select {
-			case <-time.After(time.Second / 60):
+			case <-ticker.C:
 				w.openGLFlush(totalR)
 				totalR = image.ZR
 				continue loop
@@ -315,6 +316,7 @@ loop:
 
 			case d, ok := <-w.draw:
 				if !ok {
+					ticker.Stop()
 					close(w.finish)
 					return
 				}
