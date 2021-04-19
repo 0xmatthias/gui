@@ -280,11 +280,16 @@ func (w *Win) openGLThread() {
 
 	w.openGLFlush(w.img.Bounds())
 
-loop:
+	ticker := time.NewTicker(time.Second / 60)
 	for {
 		var totalR image.Rectangle
 
 		select {
+		case <-ticker.C:
+			w.openGLFlush(totalR)
+			totalR = image.ZR
+			continue
+
 		case r := <-w.newSize:
 			img := image.NewRGBA(r)
 			draw.Draw(img, w.img.Bounds(), w.img, w.img.Bounds().Min, draw.Src)
@@ -293,36 +298,12 @@ loop:
 
 		case d, ok := <-w.draw:
 			if !ok {
+				ticker.Stop()
 				close(w.finish)
 				return
 			}
 			r := d(w.img)
 			totalR = totalR.Union(r)
-		}
-
-		for {
-			ticker := time.NewTicker(time.Second / 60)
-			select {
-			case <-ticker.C:
-				w.openGLFlush(totalR)
-				totalR = image.ZR
-				continue loop
-
-			case r := <-w.newSize:
-				img := image.NewRGBA(r)
-				draw.Draw(img, w.img.Bounds(), w.img, w.img.Bounds().Min, draw.Src)
-				w.img = img
-				totalR = totalR.Union(r)
-
-			case d, ok := <-w.draw:
-				if !ok {
-					ticker.Stop()
-					close(w.finish)
-					return
-				}
-				r := d(w.img)
-				totalR = totalR.Union(r)
-			}
 		}
 	}
 }
